@@ -1,0 +1,55 @@
+RUN IN SERVER 1
+===============
+
+sudo su -
+
+cd /vagrant/shared/lesson01
+
+./server1_topology.py
+
+sh ovs-vsctl add-port s1 vtep -- set interface vtep type=vxlan option:remote_ip=192.168.2.20 option:key=flow ofport_request=10
+
+sh ovs-vsctl show
+
+sh ovs-ofctl show s1
+
+sh ovs-ofctl add-flows s1 server1_flows.txt
+
+
+
+RUN IN SERVER 2
+===============
+
+sudo su -
+
+cd /vagrant/shared/lesson01
+
+./server2_topology.py
+
+sh ovs-vsctl add-port s2 vtep -- set interface vtep type=vxlan option:remote_ip=192.168.1.10 option:key=flow ofport_request=10
+
+sh ovs-vsctl show
+
+sh ovs-ofctl show s2
+
+sh ovs-ofctl add-flows s2 server2_flows.txt
+
+
+
+RUN IN SERVER 1
+===============
+
+red1 ping 10.0.0.2
+
+
+
+RUN IN SERVER 2
+===============
+
+red2 ifconfig red2-eth0 down
+
+(red1 should stop receiving ping replies at this point)
+
+red2 ifconfig red2-eth0 up
+
+(red1 should resume receiving ping replies)
