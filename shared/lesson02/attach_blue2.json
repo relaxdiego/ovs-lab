@@ -1,0 +1,63 @@
+{
+    "method": "transact",
+    "params": [
+        "hardware_vtep",
+        {
+            "op": "insert",
+            "table": "Logical_Switch",
+            "row": {
+                "name": "blue-network",
+                "tunnel_key": 200
+            },
+            "uuid-name": "BLUENETWORK"
+        },
+        {
+            "op": "insert",
+            "table": "Ucast_Macs_Remote",
+            "row": {
+                "logical_switch": ["named-uuid", "BLUENETWORK"],
+                "MAC": "00:00:00:00:aa:01",
+                "locator": [
+                    "set",
+                    [
+                        ["uuid", "***REPLACE WITH UUID OF 192.168.1.10***"]
+                    ]
+                ]
+            },
+            "uuid-name": "BLUE1"
+        },
+        {
+            "op": "mutate",
+            "table": "Physical_Port",
+            "where": [
+                ["name", "==", "s2-eth2"]
+            ],
+            "mutations": [
+                [
+                    "vlan_bindings",
+                    "delete",
+                    [
+                        "set",
+                        [
+                            0
+                        ]
+                    ]
+                ],
+                [
+                    "vlan_bindings",
+                    "insert",
+                    [
+                        "map",
+                        [
+                            [
+                                0,
+                                ["named-uuid", "BLUENETWORK"]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        }
+    ],
+    "id": 10
+}

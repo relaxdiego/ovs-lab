@@ -1,0 +1,6 @@
+#!/bin/sh
+
+ovs-appctl -t ovs-vswitchd exit
+ovs-appctl -t ovsdb-server exit
+rm /etc/openvswitch/vtep.db
+/etc/init.d/openvswitch-switch start

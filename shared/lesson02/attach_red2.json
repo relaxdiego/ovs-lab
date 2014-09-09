@@ -1,0 +1,72 @@
+{
+    "method": "transact",
+    "params": [
+        "hardware_vtep",
+        {
+            "op": "insert",
+            "table": "Logical_Switch",
+            "row": {
+                "name": "red-network",
+                "tunnel_key": 100
+            },
+            "uuid-name": "REDNETWORK"
+        },
+        {
+            "op": "insert",
+            "table": "Physical_Locator",
+            "row": {
+                "dst_ip": "192.168.1.10",
+                "encapsulation_type": "vxlan_over_ipv4"
+            },
+            "uuid-name": "SERVER1"
+        },
+        {
+            "op": "insert",
+            "table": "Ucast_Macs_Remote",
+            "row": {
+                "logical_switch": ["named-uuid", "REDNETWORK"],
+                "MAC": "00:00:00:00:aa:01",
+                "locator": [
+                    "set",
+                    [
+                        ["named-uuid", "SERVER1"]
+                    ]
+                ]
+            },
+            "uuid-name": "RED1"
+        },
+        {
+            "op": "mutate",
+            "table": "Physical_Port",
+            "where": [
+                ["name", "==", "s2-eth1"]
+            ],
+            "mutations": [
+                [
+                    "vlan_bindings",
+                    "delete",
+                    [
+                        "set",
+                        [
+                            0
+                        ]
+                    ]
+                ],
+                [
+                    "vlan_bindings",
+                    "insert",
+                    [
+                        "map",
+                        [
+                            [
+                                0,
+                                ["named-uuid", "REDNETWORK"]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        }
+    ],
+    "id": 10
+}
