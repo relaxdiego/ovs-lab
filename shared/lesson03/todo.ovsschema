@@ -1,0 +1,39 @@
+{
+    "name": "todo",
+    "version": "1.0.0",
+    "cksum": "1234567 891011",
+    "tables": {
+        "List": {
+            "columns": {
+                "name": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": {
+                        "key": {
+                            "type": "uuid",
+                            "refTable": "Item"
+                        },
+                        "min": 0,
+                        "max": "unlimited"
+                    }
+                }
+            },
+            "isRoot": true,
+            "indexes": [
+                ["name"]
+            ]
+        },
+        "Item": {
+            "columns": {
+                "status": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
+

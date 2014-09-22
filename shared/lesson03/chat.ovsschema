@@ -1,0 +1,19 @@
+{
+    "name": "chat",
+    "version": "1.0.0",
+    "cksum": "1234567 891011",
+    "tables": {
+        "Message": {
+            "columns": {
+                "sender": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            },
+            "isRoot": true
+        }
+    }
+}
+
