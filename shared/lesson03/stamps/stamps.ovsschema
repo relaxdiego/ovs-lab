@@ -1,0 +1,31 @@
+{
+    "name": "stamps",
+    "version": "1.0.0",
+    "cksum": "1234567 891011",
+    "tables": {
+        "Stamp": {
+            "columns": {
+                "name": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "categories": {
+                    "type": {
+                        "max": "unlimited",
+                        "min": 0,
+                        "key": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "isRoot": true,
+            "indexes": [
+                ["name"]
+            ]
+        }
+    }
+}
+

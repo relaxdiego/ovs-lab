@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Open vStamps</title>
+  </head>
+  <body>
+    <h1 id="title">OVSDB: Open vStamps Database</h1>
+    <table>
+      <tr>
+        <th>Thumbnail</th>
+        <th>Source</th>
+        <th>Categories</th>
+        <th>Actions</th>
+      </tr>
+      {% for stamp in stamps %}
+      <tr>
+        <td><img src="{{ stamp['url']}}" height="120px"/></td>
+        <td><a href="{{ stamp['url']}}" target="__source__">{{ stamp['url'][0:50] }}...</a></td>
+        <td>
+          <ul>
+          {% if stamp['categories'][0] == 'set' %}
+            {% for category in stamp['categories'][1] %}
+              <li>{{ category }}</li>
+            {% endfor %}
+          {% else %}
+            <li>{{ stamp['categories'] }}</li>
+          {% endif %}
+          </ul>
+        </td>
+        <td><a href="/view?id={{ stamp['_uuid'][1] }}">View</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>
