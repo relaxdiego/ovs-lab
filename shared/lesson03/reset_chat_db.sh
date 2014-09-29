@@ -3,7 +3,7 @@ ovs-appctl -t ovsdb-server exit
 if [ ! -d "/etc/lesson03" ]; then
   mkdir /etc/lesson03
 else
-  rm /etc/lesson03/chat.db
+  rm -f /etc/lesson03/chat.db
 fi
 
 ovsdb-tool create /etc/lesson03/chat.db /vagrant/shared/lesson03/chat.ovsschema

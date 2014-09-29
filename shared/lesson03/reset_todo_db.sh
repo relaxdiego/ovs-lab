@@ -3,7 +3,7 @@ ovs-appctl -t ovsdb-server exit
 if [ ! -d "/etc/lesson03" ]; then
   mkdir /etc/lesson03
 else
-  rm /etc/lesson03/todo.db
+  rm -f /etc/lesson03/todo.db
 fi
 
 ovsdb-tool create /etc/lesson03/todo.db /vagrant/shared/lesson03/todo.ovsschema

@@ -3,7 +3,7 @@ ovs-appctl -t ovsdb-server exit
 if [ ! -d "/etc/lesson03" ]; then
   mkdir /etc/lesson03
 else
-  rm /etc/lesson03/stamps.db
+  rm -f /etc/lesson03/stamps.db
 fi
 
 ovsdb-tool create /etc/lesson03/stamps.db /vagrant/shared/lesson03/stamps/stamps.ovsschema
