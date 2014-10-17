@@ -1,0 +1,89 @@
+#!/usr/bin/python
+
+import argparse
+import json
+from mininet.cli import CLI
+from mininet.net import Mininet
+from mininet.log import setLogLevel
+from mininet.topo import Topo
+from mininet.util import dumpNodeConnections
+import uuid
+
+
+def initialize(switch_id,
+               number_of_guests=10):
+
+    setLogLevel('info')
+
+    # Build the topology
+    topo = Topo()
+    switch_name = "br{}".format(switch_id)
+    switch = topo.addSwitch(switch_name)
+
+    for number in range(1, number_of_guests + 1):
+        guest_name = "g{}".format(number, switch_id)
+        ip = "192.168.{}.{}/24".format(number, switch_id)
+        mac = "00:00:00:00:{:02x}:{:02x}".format(number, switch_id)
+        host = topo.addHost(name=guest_name, ip=ip, mac=mac)
+        topo.addLink(host, switch, None)
+
+    # Instantiate the network using above topology
+    network = Mininet(topo, controller=None)
+    network.start()
+
+    # Configure the switch with settings required by NSX
+    switch = network.switches[0]
+    switch.cmd("ovs-vsctl br-set-external-id "
+               "{0} bridge-id {0}".format(switch_name))
+    switch.cmd("ovs-vsctl set Bridge {0} "
+               "fail-mode=standalone".format(switch_name))
+
+    # Set the external ids of each bridge port so that NSX
+    # will recognize them as virtual interfaces
+    for host in network.hosts:
+        br_intf_name = host.connectionsTo(switch)[0][1].name
+        ops = json.dumps([
+            'Open_vSwitch',
+            {
+                'op': 'select',
+                'table': 'Interface',
+                'where': [['name', '==', br_intf_name]],
+                'columns': ['_uuid']
+            }
+        ])
+        response = switch.cmd("ovsdb-client transact '{}'".format(ops))
+        br_intf_uuid = json.loads(response)[0]['rows'][0]['_uuid'][1]
+
+        external_ids = {
+            'attached-mac': host.MAC(),
+            'iface-id': uuid.uuid4(),
+            'iface-status': 'active',
+            'vm-id': uuid.uuid4()
+        }
+
+        for key, value in external_ids.items():
+            switch.cmd("ovs-vsctl set Interface {} external_ids:{}={}"
+                       .format(br_intf_uuid, key, value)
+                       )
+
+    print "*** Host connections:"
+    dumpNodeConnections(network.hosts)
+    CLI(network)
+    network.stop()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='Creates a mininet topology of 1 bridge and X guests')
+
+    parser.add_argument('-s', '--switch-id', required=True,
+                        dest='switch_id', metavar='NUMBER', action='store',
+                        help='A numeric identifier for the switch')
+    parser.add_argument('-g', '--guests', required=False,
+                        dest='number_of_guests', metavar='NUMBER',
+                        action='store', default=10,
+                        help='The number of guests to spawn. Default is 10')
+
+    args = parser.parse_args()
+
+    initialize(switch_id=int(args.switch_id),
+               number_of_guests=int(args.number_of_guests))
