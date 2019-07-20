@@ -46,8 +46,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
     end
 
-    # Not persistent across reboots!
-    server.vm.provision "shell", inline: "echo 1 > /proc/sys/net/ipv4/ip_forward"
+    server.vm.provision "shell", inline: <<-SCRIPT
+      [ "$(sysctl --values net.ipv4.ip_forward)" -eq "1" ] || {
+        # Persist across reboots
+        echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf # enable ip4 forwarding
+        sysctl -p # apply settings from /etc/sysctl.conf
+      }
+    SCRIPT
 
     server.vm.provision "puppet" do |puppet|
       puppet.manifests_path = "puppet/manifests"
@@ -65,7 +70,24 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     server.vm.network "private_network",
                       virtualbox__intnet: "server1_net",
                       ip: SERVER1_TUNNEL_IP,
-                      netmask: "255.255.255.0"
+                      netmask: "255.255.255.0",
+                      auto_config: false
+
+    # Provision tunnel transport interface via file, so we can
+    # add a persistent static route to tunnel gateway
+    server.vm.provision "shell", inline: <<-SCRIPT
+      [ -e /etc/network/interfaces.d/eth1.cfg ] || {
+         cat << EOT >/etc/network/interfaces.d/eth1.cfg
+auto eth1
+iface eth1 inet static
+      address #{SERVER1_TUNNEL_IP}
+      netmask 255.255.255.0
+      up ip route add #{SERVER2_TUNNEL_IP}/32 via #{SERVER1_TUNNEL_GATEWAY} dev eth1
+
+EOT
+         ifup eth1
+      }
+    SCRIPT
 
     # Management/Control network
     server.vm.network "private_network",
@@ -76,9 +98,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize ["modifyvm", :id, "--memory", 256]
       vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
     end
-
-    # Not persistent across reboots!
-    server.vm.provision "shell", inline: "route add #{SERVER2_TUNNEL_IP}/32 gw #{SERVER1_TUNNEL_GATEWAY} dev eth1"
 
     server.vm.provision "puppet" do |puppet|
       puppet.manifests_path = "puppet/manifests"
@@ -96,7 +115,24 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     server.vm.network "private_network",
                       virtualbox__intnet: "server2_net",
                       ip: SERVER2_TUNNEL_IP,
-                      netmask: "255.255.255.0"
+                      netmask: "255.255.255.0",
+                      auto_config: false
+
+    # Provision tunnel transport interface via file, so we can
+    # add a persistent static route to tunnel gateway
+    server.vm.provision "shell", inline: <<-SCRIPT
+      [ -e /etc/network/interfaces.d/eth1.cfg ] || {
+         cat << EOT >/etc/network/interfaces.d/eth1.cfg
+auto eth1
+iface eth1 inet static
+      address #{SERVER2_TUNNEL_IP}
+      netmask 255.255.255.0
+      up ip route add #{SERVER1_TUNNEL_IP}/32 via #{SERVER2_TUNNEL_GATEWAY} dev eth1
+
+EOT
+         ifup eth1
+      }
+    SCRIPT
 
     # Management/Control network
     server.vm.network "private_network",
@@ -107,9 +143,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize ["modifyvm", :id, "--memory", 256]
       vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
     end
-
-    # Not persistent across reboots!
-    server.vm.provision "shell", inline: "route add #{SERVER1_TUNNEL_IP}/32 gw #{SERVER2_TUNNEL_GATEWAY} dev eth1"
 
     server.vm.provision "puppet" do |puppet|
       puppet.manifests_path = "puppet/manifests"
